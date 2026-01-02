@@ -1,0 +1,50 @@
+import re
+import dns.resolver
+
+def verificar_email(email: str) -> dict:
+    """
+    Verifica se um e-mail é válido e retorna um dicionário estruturado.
+    Campos:
+      - status: "válido" ou "inválido"
+      - motivo: explicação do resultado
+    """
+    # 1. Verificação de formato
+    padrao = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(padrao, email):
+        return {
+            "status": "inválido",
+            "motivo": "Formato incorreto: deve ser usuario@dominio.ext"
+        }
+
+    # 2. Verificação de domínio via DNS MX
+    dominio = email.split('@')[-1]
+    try:
+        registros = dns.resolver.resolve(dominio, 'MX')
+        if len(registros) > 0:
+            return {
+                "status": "válido",
+                "motivo": "Formato correto e domínio existente"
+            }
+        else:
+            return {
+                "status": "inválido",
+                "motivo": "Domínio encontrado, mas sem registros MX (não aceita e-mails)"
+            }
+    except Exception:
+        return {
+            "status": "inválido",
+            "motivo": "Domínio inexistente ou não configurado para receber e-mails"
+        }
+
+
+# Exemplos de uso
+emails = [
+    "teste@gmail.com",          # válido
+    "usuario@dominiofake.com",  # domínio inexistente
+    "invalido@dominio",         # formato errado
+    "meu.email@outlook.com"     # válido
+]
+
+for e in emails:
+    resultado = verificar_email(e)
+    print(f"{e} -> {resultado}")
