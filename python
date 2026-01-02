@@ -1,3 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Verificador Básico de Spam</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            width: 400px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            margin-bottom: 10px;
+            resize: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .resultado {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📧 Verificador de Spam</h2>
+    <textarea id="emailTexto" placeholder="Cole o texto do e-mail aqui..."></textarea>
+    <button onclick="verificarSpam()">Verificar</button>
+    <div class="resultado" id="resultado"></div>
+</div>
+
+<script>
+    function verificarSpam() {
+        const texto = document.getElementById("emailTexto").value.toLowerCase();
+        const resultado = document.getElementById("resultado");
+
+        const palavrasSpam = [
+            "ganhe dinheiro",
+            "clique aqui",
+            "promoção",
+            "grátis",
+            "oferta imperdível",
+            "cartão de crédito",
+            "você ganhou",
+            "urgente",
+            "dinheiro fácil"
+        ];
+
+        let pontos = 0;
+
+        palavrasSpam.forEach(palavra => {
+            if (texto.includes(palavra)) {
+                pontos++;
+            }
+        });
+
+        if (pontos === 0) {
+            resultado.innerHTML = "✅ Provavelmente não é spam.";
+            resultado.style.color = "green";
+        } else if (pontos <= 2) {
+            resultado.innerHTML = "⚠️ Possível spam.";
+            resultado.style.color = "orange";
+        } else {
+            resultado.innerHTML = "🚨 Alto risco de spam!";
+            resultado.style.color = "red";
+        }
+    }
+</script>
+
+</body>
+</html>
 # Create the single-file Python app (main.py) for download
 
 from pathlib import Path
