@@ -17,7 +17,7 @@
         .container {
             background: white;
             padding: 20px;
-            width: 420px;
+            width: 440px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
@@ -26,12 +26,15 @@
             text-align: center;
         }
 
-        textarea {
+        input, textarea {
             width: 100%;
-            height: 130px;
             padding: 10px;
-            resize: none;
             margin-bottom: 10px;
+            resize: none;
+        }
+
+        textarea {
+            height: 120px;
         }
 
         button {
@@ -53,7 +56,23 @@
             margin-top: 15px;
             font-weight: bold;
             text-align: center;
-            font-size: 16px;
+        }
+
+        /* Barra de risco */
+        .barra-container {
+            width: 100%;
+            background: #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .barra {
+            height: 100%;
+            width: 0%;
+            background: green;
+            transition: width 0.4s ease;
         }
     </style>
 </head>
@@ -62,16 +81,29 @@
 <div class="container">
     <h2>📧 Verificador de Spam</h2>
 
-    <textarea id="textoEmail" placeholder="Cole o texto do e-mail aqui..."></textarea>
+    <input
+        type="text"
+        id="remetente"
+        placeholder="Remetente (ex: promo@ofertas-gratis.xyz)"
+    >
+
+    <textarea
+        id="textoEmail"
+        placeholder="Cole o texto do e-mail aqui..."
+    ></textarea>
 
     <button onclick="verificarSpam()">Verificar</button>
+
+    <div class="barra-container">
+        <div id="barraRisco" class="barra"></div>
+    </div>
 
     <div id="resultado" class="resultado"></div>
 </div>
 
 <script>
     // =========================
-    // CONFIGURAÇÃO DO ALGORITMO
+    // CONFIGURAÇÃO
     // =========================
     const PALAVRAS_SPAM = {
         "ganhe dinheiro": 5,
@@ -85,7 +117,11 @@
         "cartao de credito": 4
     };
 
-    const SCORE_MAXIMO = 20;
+    const SCORE_MAXIMO = 25;
+
+    const DOMINIOS_SUSPEITOS = [
+        ".xyz", ".top", ".click", ".win", ".free"
+    ];
 
     // =========================
     // FUNÇÕES
@@ -98,26 +134,36 @@
             .replace(/[^\w\s]/g, "");
     }
 
-    function heuristicasExtras(textoOriginal) {
+    function analisarRemetente(remetente) {
         let score = 0;
+        const r = remetente.toLowerCase();
 
-        if ((textoOriginal.match(/!/g) || []).length >= 3) {
-            score += 2;
-        }
+        // Muitos números no remetente
+        if ((r.match(/\d/g) || []).length >= 4) score += 2;
 
-        if ((textoOriginal.match(/https?:\/\//g) || []).length >= 2) {
-            score += 3;
-        }
+        // Domínios suspeitos
+        DOMINIOS_SUSPEITOS.forEach(dom => {
+            if (r.endsWith(dom)) score += 3;
+        });
 
-        if (textoOriginal === textoOriginal.toUpperCase() && textoOriginal.trim() !== "") {
-            score += 3;
-        }
+        // Não parece e-mail válido
+        if (!r.includes("@") || !r.includes(".")) score += 2;
 
         return score;
     }
 
-    function calcularScore(texto) {
-        let textoNorm = normalizarTexto(texto);
+    function heuristicasExtras(texto) {
+        let score = 0;
+
+        if ((texto.match(/!/g) || []).length >= 3) score += 2;
+        if ((texto.match(/https?:\/\//g) || []).length >= 2) score += 3;
+        if (texto === texto.toUpperCase() && texto.trim() !== "") score += 3;
+
+        return score;
+    }
+
+    function calcularScore(texto, remetente) {
+        const textoNorm = normalizarTexto(texto);
         let score = 0;
 
         for (let palavra in PALAVRAS_SPAM) {
@@ -127,6 +173,8 @@
         }
 
         score += heuristicasExtras(texto);
+        score += analisarRemetente(remetente);
+
         return score;
     }
 
@@ -145,28 +193,35 @@
     }
 
     // =========================
-    // AÇÃO DO BOTÃO
+    // AÇÃO
     // =========================
     function verificarSpam() {
         const texto = document.getElementById("textoEmail").value;
-        const resultadoDiv = document.getElementById("resultado");
+        const remetente = document.getElementById("remetente").value;
+        const resultado = document.getElementById("resultado");
+        const barra = document.getElementById("barraRisco");
 
         if (!texto.trim()) {
-            resultadoDiv.textContent = "Digite algum texto.";
-            resultadoDiv.style.color = "black";
+            resultado.textContent = "Digite o texto do e-mail.";
+            resultado.style.color = "black";
+            barra.style.width = "0%";
             return;
         }
 
-        const score = calcularScore(texto);
+        const score = calcularScore(texto, remetente);
         const percentual = scoreParaPercentual(score);
         const classificacao = classificar(percentual);
 
-        resultadoDiv.textContent =
+        resultado.textContent =
             `${classificacao.texto} — Risco: ${percentual}%`;
-        resultadoDiv.style.color = classificacao.cor;
+        resultado.style.color = classificacao.cor;
+
+        barra.style.width = percentual + "%";
+        barra.style.background = classificacao.cor;
     }
 </script>
 
 </body>
 </html>
+
 
