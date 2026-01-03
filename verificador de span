@@ -1,227 +1,227 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Verificador de Spam</title>
+<meta charset="UTF-8">
+<title>SpamGuard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<style>
+:root {
+    --primary: #6366f1;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #22c55e;
+    --bg: linear-gradient(135deg, #0f172a, #020617);
+    --card: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.15);
+    --text: #e5e7eb;
+}
 
-        .container {
-            background: white;
-            padding: 20px;
-            width: 440px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", system-ui, sans-serif;
+}
 
-        h2 {
-            text-align: center;
-        }
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: var(--text);
+}
 
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            resize: none;
-        }
+.container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+}
 
-        textarea {
-            height: 120px;
-        }
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
 
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+label {
+    font-size: 13px;
+    opacity: 0.8;
+}
 
-        button:hover {
-            background: #0056b3;
-        }
+input, textarea {
+    width: 100%;
+    margin-top: 6px;
+    margin-bottom: 14px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.35);
+    color: white;
+    outline: none;
+}
 
-        .resultado {
-            margin-top: 15px;
-            font-weight: bold;
-            text-align: center;
-        }
+textarea {
+    height: 120px;
+    resize: none;
+}
 
-        /* Barra de risco */
-        .barra-container {
-            width: 100%;
-            background: #ddd;
-            border-radius: 5px;
-            margin-top: 10px;
-            height: 20px;
-            overflow: hidden;
-        }
+input:focus, textarea:focus {
+    border-color: var(--primary);
+}
 
-        .barra {
-            height: 100%;
-            width: 0%;
-            background: green;
-            transition: width 0.4s ease;
-        }
-    </style>
+button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--primary), #4338ca);
+    color: white;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(99,102,241,0.4);
+}
+
+.barra-container {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    margin-top: 16px;
+    overflow: hidden;
+}
+
+.barra {
+    height: 100%;
+    width: 0%;
+    background: var(--success);
+    transition: width 0.4s ease, background 0.4s ease;
+}
+
+.resultado {
+    margin-top: 14px;
+    text-align: center;
+    font-weight: 600;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
-    <h2>📧 Verificador de Spam</h2>
+    <h2>📧 SpamGuard</h2>
 
-    <input
-        type="text"
-        id="remetente"
-        placeholder="Remetente (ex: promo@ofertas-gratis.xyz)"
-    >
+    <label>Remetente</label>
+    <input id="remetente" placeholder="promo@ofertas.xyz">
 
-    <textarea
-        id="textoEmail"
-        placeholder="Cole o texto do e-mail aqui..."
-    ></textarea>
+    <label>Conteúdo do e-mail</label>
+    <textarea id="textoEmail" placeholder="Cole o texto do e-mail aqui..."></textarea>
 
-    <button onclick="verificarSpam()">Verificar</button>
+    <button onclick="verificarSpam()">Analisar e-mail</button>
 
     <div class="barra-container">
-        <div id="barraRisco" class="barra"></div>
+        <div id="barra" class="barra"></div>
     </div>
 
     <div id="resultado" class="resultado"></div>
 </div>
 
 <script>
-    // =========================
-    // CONFIGURAÇÃO
-    // =========================
-    const PALAVRAS_SPAM = {
-        "ganhe dinheiro": 5,
-        "dinheiro facil": 5,
-        "voce ganhou": 4,
-        "clique aqui": 3,
-        "gratis": 3,
-        "promocao": 2,
-        "oferta imperdivel": 3,
-        "urgente": 2,
-        "cartao de credito": 4
-    };
+const PALAVRAS_SPAM = {
+    "ganhe dinheiro": 5,
+    "dinheiro facil": 5,
+    "voce ganhou": 4,
+    "clique aqui": 3,
+    "gratis": 3,
+    "promocao": 2,
+    "oferta imperdivel": 3,
+    "urgente": 2
+};
 
-    const SCORE_MAXIMO = 25;
+const DOMINIOS_SUSPEITOS = [".xyz", ".top", ".click", ".win", ".free"];
+const SCORE_MAX = 25;
 
-    const DOMINIOS_SUSPEITOS = [
-        ".xyz", ".top", ".click", ".win", ".free"
-    ];
+function normalizar(t) {
+    return t.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s]/g, "");
+}
 
-    // =========================
-    // FUNÇÕES
-    // =========================
-    function normalizarTexto(texto) {
-        return texto
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^\w\s]/g, "");
+function analisarRemetente(r) {
+    let s = 0;
+    if (!r.includes("@")) return 3;
+
+    const dominio = r.split("@")[1];
+    DOMINIOS_SUSPEITOS.forEach(d => {
+        if (dominio.endsWith(d)) s += 3;
+    });
+
+    if ((r.match(/\d/g) || []).length >= 4) s += 2;
+    return s;
+}
+
+function heuristicas(t) {
+    let s = 0;
+    if ((t.match(/!/g) || []).length >= 3) s += 2;
+    if ((t.match(/https?:\/\//g) || []).length >= 2) s += 3;
+    if (t === t.toUpperCase() && t.trim()) s += 3;
+    return s;
+}
+
+function verificarSpam() {
+    const texto = document.getElementById("textoEmail").value;
+    const remetente = document.getElementById("remetente").value;
+    const barra = document.getElementById("barra");
+    const res = document.getElementById("resultado");
+
+    if (!texto.trim()) {
+        res.textContent = "Informe o texto do e-mail.";
+        barra.style.width = "0%";
+        return;
     }
 
-    function analisarRemetente(remetente) {
-        let score = 0;
-        const r = remetente.toLowerCase();
+    let score = 0;
+    const tNorm = normalizar(texto);
 
-        // Muitos números no remetente
-        if ((r.match(/\d/g) || []).length >= 4) score += 2;
-
-        // Domínios suspeitos
-        DOMINIOS_SUSPEITOS.forEach(dom => {
-            if (r.endsWith(dom)) score += 3;
-        });
-
-        // Não parece e-mail válido
-        if (!r.includes("@") || !r.includes(".")) score += 2;
-
-        return score;
+    for (let p in PALAVRAS_SPAM) {
+        if (tNorm.includes(p)) score += PALAVRAS_SPAM[p];
     }
 
-    function heuristicasExtras(texto) {
-        let score = 0;
+    score += heuristicas(texto);
+    score += analisarRemetente(remetente);
 
-        if ((texto.match(/!/g) || []).length >= 3) score += 2;
-        if ((texto.match(/https?:\/\//g) || []).length >= 2) score += 3;
-        if (texto === texto.toUpperCase() && texto.trim() !== "") score += 3;
+    const pct = Math.min(100, Math.round((score / SCORE_MAX) * 100));
 
-        return score;
+    let cor, msg;
+    if (pct < 25) {
+        cor = "var(--success)";
+        msg = "✅ Baixo risco de spam";
+    } else if (pct < 60) {
+        cor = "var(--warning)";
+        msg = "⚠️ Possível spam";
+    } else {
+        cor = "var(--danger)";
+        msg = "🚨 Alto risco de spam";
     }
 
-    function calcularScore(texto, remetente) {
-        const textoNorm = normalizarTexto(texto);
-        let score = 0;
-
-        for (let palavra in PALAVRAS_SPAM) {
-            if (textoNorm.includes(palavra)) {
-                score += PALAVRAS_SPAM[palavra];
-            }
-        }
-
-        score += heuristicasExtras(texto);
-        score += analisarRemetente(remetente);
-
-        return score;
-    }
-
-    function scoreParaPercentual(score) {
-        return Math.min(100, Math.floor((score / SCORE_MAXIMO) * 100));
-    }
-
-    function classificar(percentual) {
-        if (percentual < 25) {
-            return { texto: "✅ Provavelmente não é spam", cor: "green" };
-        } else if (percentual < 60) {
-            return { texto: "⚠️ Possível spam", cor: "orange" };
-        } else {
-            return { texto: "🚨 Alto risco de spam", cor: "red" };
-        }
-    }
-
-    // =========================
-    // AÇÃO
-    // =========================
-    function verificarSpam() {
-        const texto = document.getElementById("textoEmail").value;
-        const remetente = document.getElementById("remetente").value;
-        const resultado = document.getElementById("resultado");
-        const barra = document.getElementById("barraRisco");
-
-        if (!texto.trim()) {
-            resultado.textContent = "Digite o texto do e-mail.";
-            resultado.style.color = "black";
-            barra.style.width = "0%";
-            return;
-        }
-
-        const score = calcularScore(texto, remetente);
-        const percentual = scoreParaPercentual(score);
-        const classificacao = classificar(percentual);
-
-        resultado.textContent =
-            `${classificacao.texto} — Risco: ${percentual}%`;
-        resultado.style.color = classificacao.cor;
-
-        barra.style.width = percentual + "%";
-        barra.style.background = classificacao.cor;
-    }
+    barra.style.width = pct + "%";
+    barra.style.background = cor;
+    res.textContent = `${msg} — ${pct}%`;
+}
 </script>
 
 </body>
 </html>
-
-
