@@ -3,145 +3,306 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SpamGuard PRO</title>
+<title>SpamGuard PRO - Corrigido</title>
+
+<meta http-equiv="Content-Security-Policy"
+content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none';">
 
 <style>
 :root{
- --primary:#6366f1; --danger:#ef4444; --warning:#f59e0b; --success:#22c55e;
+ --primary:#6366f1;
+ --danger:#ef4444;
+ --warning:#f59e0b;
+ --success:#22c55e;
  --bg:linear-gradient(135deg,#0f172a,#020617);
- --card:rgba(255,255,255,0.08); --border:rgba(255,255,255,0.15);
+ --card:rgba(255,255,255,0.08);
+ --border:rgba(255,255,255,0.15);
  --text:#e5e7eb;
 }
+
 *{box-sizing:border-box;font-family:Segoe UI,system-ui}
-body{margin:0;min-height:100vh;background:var(--bg);display:flex;justify-content:center;align-items:center;padding:20px;color:var(--text)}
-.container{width:100%;max-width:520px;background:var(--card);backdrop-filter:blur(12px);border-radius:18px;padding:24px;border:1px solid var(--border);box-shadow:0 25px 50px rgba(0,0,0,.5)}
-h2{text-align:center;margin-bottom:16px}
-input,textarea{width:100%;margin:6px 0 12px;padding:12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.35);color:#fff}
-textarea{height:110px;resize:none}
-button{width:100%;padding:12px;margin-top:6px;border:none;border-radius:10px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,var(--primary),#4338ca);color:#fff}
-.barra-container{height:10px;background:rgba(255,255,255,.1);border-radius:20px;margin-top:14px;overflow:hidden}
-.barra{height:100%;width:0;background:var(--success);transition:.4s}
+
+body{
+ margin:0;
+ min-height:100vh;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ background:var(--bg);
+ color:var(--text);
+ padding:20px;
+}
+
+.container{
+ width:100%;
+ max-width:520px;
+ background:var(--card);
+ padding:24px;
+ border-radius:18px;
+ border:1px solid var(--border);
+ backdrop-filter:blur(12px);
+}
+
+h2{text-align:center}
+
+input,textarea{
+ width:100%;
+ padding:12px;
+ margin:6px 0 12px;
+ border-radius:10px;
+ border:1px solid var(--border);
+ background:rgba(0,0,0,.35);
+ color:#fff;
+}
+
+textarea{height:120px;resize:none}
+
+button{
+ width:100%;
+ padding:12px;
+ margin-top:6px;
+ border:none;
+ border-radius:10px;
+ font-weight:600;
+ cursor:pointer;
+ background:linear-gradient(135deg,var(--primary),#4338ca);
+ color:#fff;
+}
+
+.barra-container{
+ height:10px;
+ background:rgba(255,255,255,.1);
+ border-radius:20px;
+ overflow:hidden;
+ margin-top:14px;
+}
+
+.barra{
+ height:100%;
+ width:0%;
+ transition:.3s;
+}
+
 .resultado{margin-top:12px;font-size:14px}
-.small-btn{background:#334155}
-.info-btn{background:#0ea5e9}
 </style>
 </head>
 
 <body>
+
 <div class="container">
 <h2>📧 SpamGuard PRO</h2>
 
 <label>Remetente</label>
-<input id="remetente" placeholder="promo@ofertas.xyz">
+<input id="remetente" autocomplete="off">
 
-<label>Conteúdo do e-mail</label>
-<textarea id="textoEmail" placeholder="Cole o texto do e-mail..."></textarea>
+<label>Texto do e-mail</label>
+<textarea id="textoEmail" autocomplete="off"></textarea>
 
-<button onclick="verificarSpam()">Analisar e-mail</button>
-<button class="small-btn" onclick="limparHistorico()">🧹 Limpar histórico</button>
-<button class="info-btn" onclick="mostrarEstatisticas()">📊 Estatísticas</button>
+<button onclick="verificarSpam()">Analisar</button>
 
-<div class="barra-container"><div id="barra" class="barra"></div></div>
+<div class="barra-container">
+ <div id="barra" class="barra"></div>
+</div>
+
 <div id="resultado" class="resultado"></div>
 </div>
 
 <script>
-const PALAVRAS_BASE={
- "ganhe dinheiro":5,"dinheiro facil":5,"voce ganhou":4,"clique aqui":3,
- "gratis":3,"urgente":2,"cartao bloqueado":5,"confirme sua senha":5
-};
-const ENCURTADORES=["bit.ly","tinyurl.com","goo.gl","t.co"];
-const SCORE_MAX=45;
+// =====================
+// CONFIGURAÇÃO
+// =====================
 
-let historico=JSON.parse(localStorage.getItem("hist")||"[]");
-let blacklist=JSON.parse(localStorage.getItem("black")||"[]");
-let aprendidas=JSON.parse(localStorage.getItem("learn")||"{}");
+const PALAVRAS_BASE = Object.freeze({
+ "ganhe dinheiro":5,
+ "dinheiro facil":5,
+ "voce ganhou":4,
+ "clique aqui":3,
+ "gratis":3,
+ "urgente":2,
+ "cartao bloqueado":5,
+ "confirme sua senha":5
+});
 
-function salvar(){
- localStorage.setItem("hist",JSON.stringify(historico));
- localStorage.setItem("black",JSON.stringify(blacklist));
- localStorage.setItem("learn",JSON.stringify(aprendidas));
+const ENCURTADORES = Object.freeze([
+ "bit.ly","tinyurl.com","goo.gl","t.co"
+]);
+
+// SCORE corrigido (dinâmico)
+const SCORE_MAX =
+Object.values(PALAVRAS_BASE).reduce((a,b)=>a+b,0) + 10;
+
+// =====================
+// UTILITÁRIOS
+// =====================
+
+function sanitizar(t){
+ return t
+  .replace(/<[^>]*>?/gm,"")
+  .replace(/javascript\s*:/gi,"")
+  .trim();
 }
 
 function norm(t){
- return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
- .replace(/[^\w\s@.:/]/g,"");
+ return t.toLowerCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g,"")
+  .replace(/[^\w\s@.:/?=&%+\-]/g,"");
+}
+
+function emailValido(e){
+ return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e);
+}
+
+function unicodeOculto(t){
+ return /[\u200B-\u200D\uFEFF]/.test(t);
+}
+
+// =====================
+// DETECÇÃO
+// =====================
+
+function palavras(t,m){
+ let s=0;
+
+ for(let p in PALAVRAS_BASE){
+   const regex = new RegExp(`\\b${p}\\b`,"i");
+
+   if(regex.test(t)){
+     s += PALAVRAS_BASE[p];
+     m.push("Palavra suspeita: "+p);
+   }
+ }
+
+ return s;
 }
 
 function links(texto,m){
- let s=0,ls=texto.match(/https?:\/\/[^\s]+/g)||[];
+ let s=0;
+
+ const ls = texto.match(/https?:\/\/[^\s]+/g) || [];
+
  ls.forEach(l=>{
-  ENCURTADORES.forEach(e=>{
-   if(l.includes(e)){s+=4;m.push("Link encurtado: "+e);}
-  });
+   ENCURTADORES.forEach(e=>{
+     if(l.includes(e)){
+       s += 4;
+       m.push("Link encurtado: "+e);
+     }
+   });
  });
- if(ls.length>2){s+=3;m.push("Muitos links");}
+
+ if(ls.length > 2){
+   s += 3;
+   m.push("Excesso de links");
+ }
+
  return s;
 }
 
 function remetente(r,m){
  let s=0;
- if(!r.includes("@")){m.push("Remetente inválido");return 3;}
- let d=r.split("@")[1];
- if(blacklist.includes(d)){s+=6;m.push("Domínio na blacklist");}
- if((r.match(/\d/g)||[]).length>=4){s+=2;m.push("Muitos números");}
- return s;
-}
 
-function palavras(t,m){
- let s=0,base={...PALAVRAS_BASE,...aprendidas};
- for(let p in base){
-  if(t.includes(p)){s+=base[p];m.push("Palavra: "+p);}
+ if(!emailValido(r)){
+   m.push("E-mail inválido");
+   return 3;
  }
+
+ let dominio = r.split("@")[1];
+
+ if(dominio && dominio.includes("gmail") && r.includes("no-reply")){
+   s += 2;
+   m.push("Possível e-mail falsificado");
+ }
+
  return s;
 }
 
-function aprender(t){
- t.split(/\s+/).filter(p=>p.length>6).forEach(p=>{
-  if(!PALAVRAS_BASE[p])aprendidas[p]=(aprendidas[p]||1)+1;
+// =====================
+// UI SEGURA
+// =====================
+
+function exibirResultado(msg,pct,motivos){
+ const res = document.getElementById("resultado");
+ const barra = document.getElementById("barra");
+
+ // limpa DOM de forma segura
+ while(res.firstChild){
+   res.removeChild(res.firstChild);
+ }
+
+ const titulo = document.createElement("div");
+ titulo.textContent = `${msg} — ${pct}%`;
+
+ const lista = document.createElement("ul");
+
+ motivos.forEach(m=>{
+   const li = document.createElement("li");
+   li.textContent = m;
+   lista.appendChild(li);
  });
+
+ res.appendChild(titulo);
+ res.appendChild(lista);
+
+ let cor =
+   pct < 30 ? "var(--success)" :
+   pct < 65 ? "var(--warning)" :
+              "var(--danger)";
+
+ barra.style.width = pct + "%";
+ barra.style.background = cor;
 }
+
+// =====================
+// PRINCIPAL
+// =====================
 
 function verificarSpam(){
- const texto=document.getElementById("textoEmail").value;
- const rem=document.getElementById("remetente").value;
- const barra=document.getElementById("barra");
- const res=document.getElementById("resultado");
 
- if(!texto.trim()){res.textContent="Informe o texto.";return;}
+ const texto = sanitizar(
+   document.getElementById("textoEmail").value
+ );
 
- let m=[],score=0,t=norm(texto);
+ const rem = sanitizar(
+   document.getElementById("remetente").value
+ );
 
- score+=palavras(t,m);
- score+=links(texto,m);
- score+=remetente(rem,m);
+ if(!texto){
+   document.getElementById("resultado").textContent =
+   "Informe o texto.";
+   return;
+ }
 
- let pct=Math.min(100,Math.round(score/SCORE_MAX*100));
- let cor,msg;
+ if(texto.length > 10000){
+   document.getElementById("resultado").textContent =
+   "Texto muito grande.";
+   return;
+ }
 
- if(pct<30){cor="var(--success)";msg="✅ Baixo risco";}
- else if(pct<65){cor="var(--warning)";msg="⚠️ Possível spam";}
- else{cor="var(--danger)";msg="🚨 Alto risco";}
+ let m = [];
+ let score = 0;
 
- barra.style.width=pct+"%";
- barra.style.background=cor;
+ const t = norm(texto);
 
- historico.push(pct);
- aprender(t);
- salvar();
+ score += palavras(t,m);
+ score += links(texto,m);
+ score += remetente(rem,m);
 
- res.innerHTML=`${msg} — ${pct}%<br><br><b>Motivos:</b><br>${m.join("<br>")||"Nenhum"}<br><br><small>Análises: ${historico.length}</small>`;
-}
+ if(unicodeOculto(texto)){
+   score += 5;
+   m.push("Caracteres invisíveis detectados");
+ }
 
-function limparHistorico(){
- historico=[];salvar();alert("Histórico limpo!");
-}
+ let pct = Math.min(100, Math.round(score / SCORE_MAX * 100));
 
-function mostrarEstatisticas(){
- if(!historico.length){alert("Sem dados.");return;}
- let media=(historico.reduce((a,b)=>a+b,0)/historico.length).toFixed(1);
- alert(`Análises: ${historico.length}\nMédia de risco: ${media}%`);
+ exibirResultado(
+   pct >= 65 ? "🚨 Alto risco" :
+   pct >= 30 ? "⚠️ Possível spam" :
+               "✅ Baixo risco",
+   pct,
+   m
+ );
 }
 </script>
+
 </body>
 </html>
