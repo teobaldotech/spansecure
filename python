@@ -1,187 +1,161 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Verificador Básico de Spam</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            background: white;
-            padding: 20px;
-            width: 400px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 10px;
-            margin-bottom: 10px;
-            resize: none;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #0056b3;
-        }
-
-        .resultado {
-            margin-top: 15px;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>📧 Verificador de Spam</h2>
-    <textarea id="emailTexto" placeholder="Cole o texto do e-mail aqui..."></textarea>
-    <button onclick="verificarSpam()">Verificar</button>
-    <div class="resultado" id="resultado"></div>
-</div>
-
-<script>
-    function verificarSpam() {
-        const texto = document.getElementById("emailTexto").value.toLowerCase();
-        const resultado = document.getElementById("resultado");
-
-        const palavrasSpam = [
-            "ganhe dinheiro",
-            "clique aqui",
-            "promoção",
-            "grátis",
-            "oferta imperdível",
-            "cartão de crédito",
-            "você ganhou",
-            "urgente",
-            "dinheiro fácil"
-        ];
-
-        let pontos = 0;
-
-        palavrasSpam.forEach(palavra => {
-            if (texto.includes(palavra)) {
-                pontos++;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificador de Spam - App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0B132B',
+                        cardbg: '#1C2541',
+                        accent: '#4361EE'
+                    }
+                }
             }
-        });
-
-        if (pontos === 0) {
-            resultado.innerHTML = "✅ Provavelmente não é spam.";
-            resultado.style.color = "green";
-        } else if (pontos <= 2) {
-            resultado.innerHTML = "⚠️ Possível spam.";
-            resultado.style.color = "orange";
-        } else {
-            resultado.innerHTML = "🚨 Alto risco de spam!";
-            resultado.style.color = "red";
         }
-    }
-</script>
+    </script>
+</head>
+<body class="bg-darkbg text-white font-sans min-h-screen flex items-center justify-center p-4">
 
+    <!-- Container Principal do Aplicativo (Estilo Mobile / Card Responsivo) -->
+    <div class="w-full max-w-md bg-cardbg rounded-3xl shadow-2xl p-6 border border-slate-700/50 flex flex-col justify-between" style="min-height: 650px;">
+        
+        <!-- Cabeçalho / Capa -->
+        <div id="view-capa" class="flex flex-col items-center justify-center text-center flex-grow py-8">
+            <div class="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-400 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-6 transform hover:scale-105 transition-transform duration-300">
+                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+            </div>
+            
+            <h1 class="text-3xl font-extrabold tracking-wide mb-2 bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">SPAM CHECKER</h1>
+            <p class="text-slate-400 text-sm max-w-xs mb-8">Proteção instantânea de e-mails contra fraudes e golpes na sua caixa de entrada.</p>
+            
+            <!-- Botões Clicáveis da Capa -->
+            <div class="w-full space-y-3">
+                <button onclick="mudarTela('app')" class="w-full py-4 bg-accent hover:bg-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    Verificar E-mail
+                </button>
+                <button onclick="mudarTela('config')" class="w-full py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition-all duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Configurações
+                </button>
+            </div>
+        </div>
+
+        <!-- Tela do Verificador de E-mail (Oculta por padrão) -->
+        <div id="view-app" class="hidden flex-col flex-grow justify-between py-2">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <button onclick="mudarTela('capa')" class="text-slate-400 hover:text-white flex items-center gap-1 text-sm bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+                        ← Voltar
+                    </button>
+                    <h2 class="text-lg font-bold">Verificador de Spam</h2>
+                </div>
+                
+                <textarea id="emailTexto" rows="5" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-accent resize-none mb-3" placeholder="Cole o texto do e-mail suspeito aqui..."></textarea>
+                
+                <button onclick="verificarSpam()" class="w-full py-3 bg-accent hover:bg-blue-600 text-white font-semibold rounded-xl shadow-lg transition-all">
+                    Analisar E-mail
+                </button>
+
+                <div id="resultado" class="mt-4 p-4 rounded-xl hidden text-center font-medium"></div>
+            </div>
+        </div>
+
+        <!-- Tela de Configurações (Oculta por padrão) -->
+        <div id="view-config" class="hidden flex-col flex-grow justify-between py-2">
+            <div>
+                <div class="flex items-center justify-between mb-6">
+                    <button onclick="mudarTela('capa')" class="text-slate-400 hover:text-white flex items-center gap-1 text-sm bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+                        ← Voltar
+                    </button>
+                    <h2 class="text-lg font-bold">Configurações</h2>
+                </div>
+
+                <div class="space-y-4 text-left">
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                        <span class="block text-sm font-semibold text-slate-300">Critérios Ativos</span>
+                        <span class="text-xs text-slate-500">Busca por palavras-chave, links excessivos, excesso de maiúsculas e exclamações.</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+                        <div>
+                            <span class="block text-sm font-semibold text-slate-300">Sensibilidade</span>
+                            <span class="text-xs text-slate-500">Padrão da IA de detecção</span>
+                        </div>
+                        <span class="text-xs bg-blue-500/20 text-blue-400 px-2.5 py-1 rounded-md font-semibold">Média</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-xs text-slate-600 pt-4">
+                Spam Checker v1.0.0
+            </div>
+        </div>
+
+        <!-- Rodapé fixo sutil -->
+        <div class="text-center text-xs text-slate-500 pt-4 border-t border-slate-800/60 mt-4">
+            Feito com segurança para você 🛡️
+        </div>
+    </div>
+
+    <script>
+        function mudarTela(tela) {
+            document.getElementById('view-capa').classList.add('hidden');
+            document.getElementById('view-app').classList.add('hidden');
+            document.getElementById('view-config').classList.add('hidden');
+
+            if (tela === 'capa') {
+                document.getElementById('view-capa').classList.remove('hidden');
+            } else if (tela === 'app') {
+                document.getElementById('view-app').classList.remove('flex');
+                document.getElementById('view-app').classList.remove('hidden');
+                document.getElementById('view-app').classList.add('flex');
+            } else if (tela === 'config') {
+                document.getElementById('view-config').classList.remove('flex');
+                document.getElementById('view-config').classList.add('hidden');
+                document.getElementById('view-config').classList.add('flex');
+            }
+        }
+
+        function verificarSpam() {
+            const texto = document.getElementById("emailTexto").value;
+            const textoLower = texto.toLowerCase();
+            const resultado = document.getElementById("resultado");
+            
+            const palavrasSpam = [
+                "ganhe", "dinheiro", "promoção", "oferta",
+                "clique aqui", "grátis", "urgente", "aproveite", "cartão"
+            ];
+
+            let score = 0;
+
+            palavrasSpam.forEach(palavra => {
+                if (textoLower.includes(palavra)) score += 2;
+            });
+
+            if ((texto.match(/https?:\/\//g) || []).length > 2) score += 3;
+            if ((texto.match(/!/g) || []).length > 3) score += 2;
+            if (texto.trim() && texto === texto.toUpperCase()) score += 3;
+
+            resultado.classList.remove('hidden');
+
+            if (score >= 5) {
+                resultado.className = "mt-4 p-4 rounded-xl text-center font-bold bg-red-500/20 text-red-400 border border-red-500/30";
+                resultado.innerHTML = `🚨 ALTO RISCO DE SPAM!<br><span class="text-xs font-normal text-slate-300">Pontuação de risco: ${score}</span>`;
+            } else if (score > 0) {
+                resultado.className = "mt-4 p-4 rounded-xl text-center font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                resultado.innerHTML = `⚠️ Possível Spam.<br><span class="text-xs font-normal text-slate-300">Pontuação de risco: ${score}</span>`;
+            } else {
+                resultado.className = "mt-4 p-4 rounded-xl text-center font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                resultado.innerHTML = `✅ E-mail provável seguro.<br><span class="text-xs font-normal text-slate-300">Pontuação limpa.</span>`;
+            }
+        }
+    </script>
 </body>
 </html>
-# Create the single-file Python app (main.py) for download
-
-from pathlib import Path
-
-path = Path("/mnt/data")
-file_path = path / "spam_checker_mobile_python_main.py"
-
-code = """from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
-from kivy.uix.button import Button
-import re
-
-PALAVRAS_SPAM = [
-    "ganhe", "dinheiro", "promoção", "oferta",
-    "clique aqui", "grátis", "urgente", "aproveite"
-]
-
-LIMITE_SPAM = 5
-
-class SpamChecker(BoxLayout):
-    def __init__(self, **kwargs):
-        super().__init__(orientation="vertical", padding=15, spacing=10, **kwargs)
-
-        self.add_widget(Label(
-            text="Verificador de Spam de E-mail",
-            font_size=20
-        ))
-
-        self.email_input = TextInput(
-            hint_text="Cole o texto do e-mail aqui",
-            multiline=True,
-            size_hint_y=0.45
-        )
-        self.add_widget(self.email_input)
-
-        btn = Button(
-            text="Verificar Spam",
-            size_hint_y=0.15
-        )
-        btn.bind(on_press=self.verificar)
-        self.add_widget(btn)
-
-        self.resultado = Label(text="", font_size=22)
-        self.pontos = Label(text="")
-        self.add_widget(self.resultado)
-        self.add_widget(self.pontos)
-
-    def verificar(self, instance):
-        texto = self.email_input.text
-        texto_lower = texto.lower()
-        score = 0
-
-        for palavra in PALAVRAS_SPAM:
-            if palavra in texto_lower:
-                score += 2
-
-        if len(re.findall(r'https?://', texto_lower)) > 2:
-            score += 3
-
-        if texto.count("!") > 3:
-            score += 2
-
-        if texto.strip() and texto == texto.upper():
-            score += 3
-
-        if score >= LIMITE_SPAM:
-            self.resultado.text = "🚨 SPAM"
-        else:
-            self.resultado.text = "✅ NÃO É SPAM"
-
-        self.pontos.text = f"Pontuação: {score}"
-
-
-class SpamApp(App):
-    def build(self):
-        return SpamChecker()
-
-
-if __name__ == "__main__":
-    SpamApp().run()
-"""
-
-file_path.write_text(code, encoding="utf-8")
-
-str(file_path)
